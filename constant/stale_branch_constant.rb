@@ -9,7 +9,7 @@ module StaleBranchConstant
   REPO = 'stale-branch'
   OPEN_PR_STATE = 'open'
   EXCLUDED_BRANCHES = %w[main staging master].freeze
-  MASTER_BRANCH = 'master'
+  MASTER_BRANCH = 'staging'
   PR_TITLE = 'Standard PR Created for Deleting Branch'
   PR_BODY = 'This PR is an automated one created just for'\
          ' closing and then deleting the branch.'\
