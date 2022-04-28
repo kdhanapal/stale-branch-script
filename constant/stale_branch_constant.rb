@@ -3,7 +3,7 @@
 module StaleBranchConstant
   HEADERS = {
     'Accept' => 'application/vnd.github.v3+json',
-    'Authorization' => 'token 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'
+    'Authorization' => 'token <your personal access token here>'
   }.freeze
   OWNER = 'kdhanapal'
   REPO = 'stale-branch'
