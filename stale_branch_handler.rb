@@ -75,7 +75,6 @@ while current_branches.any?
     )
 
     # branches to exclude from creating a PR.
-    # Main is the master branch hence by default it will be excluded.
     pr_qualified_stale_branches_list -= StaleBranchConstant::EXCLUDED_BRANCHES
     if pr_qualified_stale_branches_list.any?
       puts 'Creating PR to the stale branches that do not have open PR...'
