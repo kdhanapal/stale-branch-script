@@ -22,28 +22,11 @@ class StaleBranchHandler
       current_stale_branch_time_unit = TimeDifference.between(
         row[:c_date], current_time
       ).send(StaleBranchConstant::TIME_DIFFERENCE_UNIT)
-      if current_stale_branch_time_unit >= StaleBranchConstant::STALE_BRANCH_TIME_UNIT_VALUE
+      if current_stale_branch_time_unit >= StaleBranchConstant::STALE_BRANCH_TIME_UNIT_VALUE && branch_not_whitelisted?(row[:name])
         stale_branches << row[:name]
       end
     end
     stale_branches
-  end
-
-  # Returns a list of stale branches to which are qualified to create a PR
-  def pr_qualified_stale_branches(stale_branches, existing_open_pr_branches)
-    pr_qualified_stale_branches_list = []
-    return unless stale_branches.any?
-
-    stale_branches.each do |stale_branch|
-      if existing_open_pr_branches.nil?
-        pr_qualified_stale_branches_list << stale_branch
-      elsif existing_open_pr_branches.any? && !existing_open_pr_branches.include?(stale_branch)
-        pr_qualified_stale_branches_list << stale_branch
-      else
-        next
-      end
-    end
-    pr_qualified_stale_branches_list
   end
 
   # Takes the Stale Branches as input and delete's them
@@ -58,33 +41,33 @@ class StaleBranchHandler
 end
 
 stale_branch_handler_object = StaleBranchHandler.new
-
 page_num = 1
+open_pr_info = stale_branch_handler_object.list_all_open_pr
+existing_open_pr_branches = open_pr_info.keys
 current_branches = stale_branch_handler_object.branches_report_per_page(page_num)
 total_deleted_branches = 0
-while current_branches.any?
-  "Stale Branch action for page : #{page_num}"
-  stale_branches = stale_branch_handler_object.get_stale_branches(current_branches)
 
+while current_branches.any?
+  stale_branches = stale_branch_handler_object.get_stale_branches(current_branches)
   if stale_branches.present?
     stale_branches -= StaleBranchConstant::EXCLUDED_BRANCHES
-    existing_open_pr_branches = stale_branch_handler_object.existing_open_pr_name
+    # existing_open_pr_branches = stale_branch_handler_object.existing_open_pr_name
     pr_qualified_stale_branches_list = stale_branch_handler_object.pr_qualified_stale_branches(
       stale_branches,
       existing_open_pr_branches
     )
-
-    # branches to exclude from creating a PR.
-    # Main is the master branch hence by default it will be excluded.
+    # EXCLUDED_BRANCHES is the list of branches to exclude from creating a PR.
     pr_qualified_stale_branches_list -= StaleBranchConstant::EXCLUDED_BRANCHES
     if pr_qualified_stale_branches_list.any?
       puts 'Creating PR to the stale branches that do not have open PR...'
       stale_branch_handler_object.create_pull_request(pr_qualified_stale_branches_list)
       puts 'Pull Request is created for the Stale Branches!'
     end
-    closing_pr_list = stale_branch_handler_object.existing_open_pr_number
+    open_pr_info = stale_branch_handler_object.list_all_open_pr
+    # collects open pr info and filters out non stale branches from being closed.
+    qualified_closing_pr = stale_branch_handler_object.qualified_close_pr(stale_branches, open_pr_info)
     puts 'Closing the Stable Branches Open PR...'
-    stale_branch_handler_object.close_pull_request(closing_pr_list)
+    stale_branch_handler_object.close_pull_request(qualified_closing_pr)
     puts 'Closed the PR for the given Stale Branches!'
     puts 'Deleting the Stale Branches...'
     stale_branch_handler_object.delete_stale_branches(stale_branches)
