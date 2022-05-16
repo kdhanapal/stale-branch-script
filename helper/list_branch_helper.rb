@@ -15,9 +15,7 @@ module ListBranchHelper
       committer = com_det['commit']['committer']
       branch_report << {
         name: branch['name'],
-        c_date: committer['date'],
-        c_name: committer['name'],
-        c_email: committer['email']
+        c_date: committer['date']
       }
     end
     { 'b_r': branch_report }  

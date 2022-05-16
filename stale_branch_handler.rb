@@ -42,16 +42,20 @@ end
 
 stale_branch_handler_object = StaleBranchHandler.new
 page_num = 1
+puts 'Collecting all the open PR info....'
 open_pr_info = stale_branch_handler_object.list_all_open_pr
+puts 'Open PR info collected!'
 existing_open_pr_branches = open_pr_info.keys
+puts "Processing for the page: #{page_num}"
 current_branches = stale_branch_handler_object.branches_report_per_page(page_num)
 total_deleted_branches = 0
+all_stale_branches = []
 
-while current_branches.any?
+while current_branches[:b_r].any?
   stale_branches = stale_branch_handler_object.get_stale_branches(current_branches)
-  if stale_branches.present?
+  (all_stale_branches << stale_branches).flatten!
+  if stale_branches.any?
     stale_branches -= StaleBranchConstant::EXCLUDED_BRANCHES
-    # existing_open_pr_branches = stale_branch_handler_object.existing_open_pr_name
     pr_qualified_stale_branches_list = stale_branch_handler_object.pr_qualified_stale_branches(
       stale_branches,
       existing_open_pr_branches
@@ -74,11 +78,14 @@ while current_branches.any?
     puts "Deleted the stale branches "
     total_deleted_branches += stale_branches.size
   else
-    puts "No more stale branches is present!"
-    break
+    puts "No stale branches is present in this page"
   end
   page_num += 1
+  puts "Processing for the page: #{page_num}"
   current_branches = stale_branch_handler_object.branches_report_per_page(page_num)
 end
 
+puts "all stale branches are "
+puts all_stale_branches
+puts "stale branch size is : #{all_stale_branches.size}"
 puts "Total number of stale branches deleted is... #{total_deleted_branches}"

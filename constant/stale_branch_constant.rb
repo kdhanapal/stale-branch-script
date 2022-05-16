@@ -5,8 +5,8 @@ module StaleBranchConstant
     'Accept' => 'application/vnd.github.v3+json',
     'Authorization' => 'token <your personal access token here>'
   }.freeze
-  OWNER = 'kdhanapal'
-  REPO = 'stale-branch'
+  OWNER = 'freshdesk'
+  REPO = 'freshsales'
   OPEN_PR_STATE = 'open'
   EXCLUDED_BRANCHES = %w[main staging master].freeze
   MASTER_BRANCH = 'staging'
@@ -22,10 +22,10 @@ module StaleBranchConstant
   PATCH_BODY = { state: 'closed' }.to_json
   DELETE_BRANCH_BASE_URL = 'https://api.github.com/repos/'\
                            "#{OWNER}/#{REPO}/git/refs/heads/"
-  STALE_BRANCH_TIME_UNIT_VALUE = 5 # 720 as constant
-  TIME_DIFFERENCE_UNIT = 'in_minutes'
+  STALE_BRANCH_TIME_UNIT_VALUE = 3 # 720 as constant
+  TIME_DIFFERENCE_UNIT = 'in_years'
   UTC_CURRENT_TIMESTAMP = Time.now.utc.iso8601
-  BRANCH_PER_PAGE = 5
+  BRANCH_PER_PAGE = 100
   LIST_BRANCH_BASE_URL = 'https://api.github.com/repos/'\
                           "#{OWNER}/#{REPO}/branches?page="
 end
