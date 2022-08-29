@@ -6,6 +6,8 @@ module StaleBranchConstant
     'Authorization' => 'token <your personal access token here>'
   }.freeze
   OWNER = 'freshdesk'
+  CREATE_RESPONSE_CODE = 201
+  UPDATE_PR_RESPONSE_CODE = 200
   REPO = 'freshsales'
   OPEN_PR_STATE = 'open'
   EXCLUDED_BRANCHES = %w[main staging master].freeze
@@ -22,8 +24,8 @@ module StaleBranchConstant
   PATCH_BODY = { state: 'closed' }.to_json
   DELETE_BRANCH_BASE_URL = 'https://api.github.com/repos/'\
                            "#{OWNER}/#{REPO}/git/refs/heads/"
-  STALE_BRANCH_TIME_UNIT_VALUE = 3 # 720 as constant
-  TIME_DIFFERENCE_UNIT = 'in_years'
+  STALE_BRANCH_TIME_UNIT_VALUE = 8
+  TIME_DIFFERENCE_UNIT = 'in_months'
   UTC_CURRENT_TIMESTAMP = Time.now.utc.iso8601
   BRANCH_PER_PAGE = 100
   LIST_BRANCH_BASE_URL = 'https://api.github.com/repos/'\

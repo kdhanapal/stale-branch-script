@@ -17,6 +17,7 @@ module ListBranchHelper
         name: branch['name'],
         c_date: committer['date']
       }
+      sleep 0.5
     end
     { 'b_r': branch_report }  
   end

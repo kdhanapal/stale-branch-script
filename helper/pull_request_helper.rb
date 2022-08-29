@@ -18,30 +18,52 @@ module PullRequestHelper
   end
 
   # creates  pull request for the given stale branches
-  def create_pull_request(pr_stale_branch_create_list)
+  def create_pull_request(pr_stale_branch_create_list, open_pr_info)
     return unless pr_stale_branch_create_list.any?
 
+    failed_pr_creation_branch_list = []
     pr_stale_branch_create_list.each do |stale_branch|
-      post_body = create_pr_post_body(stale_branch)
-      HTTParty.post(
-        StaleBranchConstant::POST_BASE_URL,
-        body: post_body,
-        headers: StaleBranchConstant::HEADERS
-      )
+      begin
+        post_body = create_pr_post_body(stale_branch)
+        response = HTTParty.post(
+          StaleBranchConstant::POST_BASE_URL,
+          body: post_body,
+          headers: StaleBranchConstant::HEADERS
+        )
+        if response.code == StaleBranchConstant::CREATE_RESPONSE_CODE
+          response_body = JSON.parse(response.body)
+          current_pr_number = response_body['number']
+          open_pr_info[stale_branch] = current_pr_number
+        else
+          raise StandardError.new "PR creation failed for branch #{stale_branch}"
+        end
+      rescue StandardError => e
+        puts e.message
+        failed_pr_creation_branch_list << stale_branch
+      end
+      sleep 1
     end
+    failed_pr_creation_branch_list
   end
 
   # closes the pull request for the given list of pull request numbers
-  def close_pull_request(closing_pr_list)
+  def close_pull_request(closing_pr_list, open_pr_info)
     return unless closing_pr_list.present?
 
+    inverted_oper_pr_info = open_pr_info.invert
     closing_pr_list.each do |pr_number|
+      current_branch = inverted_oper_pr_info[pr_number]
       patch_url = StaleBranchConstant::PATCH_PR_BASE_URL + pr_number.to_s
-      HTTParty.patch(
+      response = HTTParty.patch(
         patch_url,
         body: StaleBranchConstant::PATCH_BODY,
         headers: StaleBranchConstant::HEADERS
       )
+
+      if response.code == UPDATE_PR_RESPONSE_CODE
+        open_pr_info.delete(current_branch)
+      end
+      sleep 0.5
     end
   end
 

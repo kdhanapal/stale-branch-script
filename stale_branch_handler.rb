@@ -45,13 +45,13 @@ page_num = 1
 puts 'Collecting all the open PR info....'
 open_pr_info = stale_branch_handler_object.list_all_open_pr
 puts 'Open PR info collected!'
-existing_open_pr_branches = open_pr_info.keys
 puts "Processing for the page: #{page_num}"
 current_branches = stale_branch_handler_object.branches_report_per_page(page_num)
 total_deleted_branches = 0
 all_stale_branches = []
 
 while current_branches[:b_r].any?
+  existing_open_pr_branches = open_pr_info.keys
   stale_branches = stale_branch_handler_object.get_stale_branches(current_branches)
   (all_stale_branches << stale_branches).flatten!
   if stale_branches.any?
@@ -61,21 +61,29 @@ while current_branches[:b_r].any?
       existing_open_pr_branches
     )
     # EXCLUDED_BRANCHES is the list of branches to exclude from creating a PR.
-    pr_qualified_stale_branches_list -= StaleBranchConstant::EXCLUDED_BRANCHES
-    if pr_qualified_stale_branches_list.any?
+    failed_pr_creation_branch_list = []
+    if pr_qualified_stale_branches_list.present?
+      pr_qualified_stale_branches_list -= StaleBranchConstant::EXCLUDED_BRANCHES
       puts 'Creating PR to the stale branches that do not have open PR...'
-      stale_branch_handler_object.create_pull_request(pr_qualified_stale_branches_list)
+      failed_pr_creation_branch_list = stale_branch_handler_object.create_pull_request(pr_qualified_stale_branches_list, open_pr_info)
       puts 'Pull Request is created for the Stale Branches!'
     end
-    open_pr_info = stale_branch_handler_object.list_all_open_pr
+    if failed_pr_creation_branch_list.any?
+      stale_branches -= failed_pr_creation_branch_list
+    end
+    # open_pr_info = stale_branch_handler_object.list_all_open_pr
     # collects open pr info and filters out non stale branches from being closed.
     qualified_closing_pr = stale_branch_handler_object.qualified_close_pr(stale_branches, open_pr_info)
     puts 'Closing the Stable Branches Open PR...'
-    stale_branch_handler_object.close_pull_request(qualified_closing_pr)
+    stale_branch_handler_object.close_pull_request(qualified_closing_pr, open_pr_info)
     puts 'Closed the PR for the given Stale Branches!'
-    puts 'Deleting the Stale Branches...'
-    stale_branch_handler_object.delete_stale_branches(stale_branches)
-    puts "Deleted the stale branches "
+    if stale_branches.any?
+      puts 'Deleting the Stale Branches...'
+      stale_branch_handler_object.delete_stale_branches(stale_branches)
+      puts "Deleted the stale branches "
+    else
+      "No Stale branches to delete in this page"
+    end
     total_deleted_branches += stale_branches.size
   else
     puts "No stale branches is present in this page"
